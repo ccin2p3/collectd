@@ -18,6 +18,7 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * Author:
+ *   Remi Ferrand <remi.ferrand at cc.in2p3.fr> for Centre de Calcul de l'IN2P3
  *   Florian octo Forster <octo at collectd.org>
  *   Sebastian Harl <sh at tokkee.org>
  *   Andrés J. Díaz <ajdiaz at connectical.com>
@@ -29,6 +30,8 @@
 #include "utils_avltree.h"
 #include "utils_cache.h"
 
+#include <sys/types.h>
+#include <regex.h>
 #include <assert.h>
 #include <pthread.h>
 
@@ -964,22 +967,38 @@ static int ut_missing (const value_list_t *vl,
   return (0);
 } /* }}} int ut_missing */
 
+int re_compare(void *a, void *b) {
+
+    regex_t rxp;
+    char rxp_error[1024];
+
+    memset(&rxp_error, 0x0, sizeof(rxp_error));
+
+    int rc = regcomp(&rxp, (char *) b, REG_EXTENDED | REG_ICASE);
+    if (rc < 0) {
+        regerror(rc, &rxp, rxp_error, sizeof(rxp_error));
+        ERROR("threshold plugin: regcomp() failed: %s", rxp_error);
+        goto out;
+    }
+
+    rc = regexec(&rxp, (char *) a, 
+            /* nmatch */ 0, /* pmatch */ NULL, /* eflags */ 0);
+    if (rc == 0)
+        DEBUG("threshold plugin: match with regexp '%s' for string '%s'\n", (char *) b, (char *) a);
+
+    regfree(&rxp);
+
+out:
+    return rc;
+}
+
 int ut_config (oconfig_item_t *ci)
 { /* {{{ */
   int i;
   int status = 0;
 
   threshold_t th;
-
-  if (threshold_tree == NULL)
-  {
-    threshold_tree = c_avl_create ((void *) strcmp);
-    if (threshold_tree == NULL)
-    {
-      ERROR ("ut_config: c_avl_create failed.");
-      return (-1);
-    }
-  }
+  void *compare = (void *) strcmp;
 
   memset (&th, '\0', sizeof (th));
   th.warning_min = NAN;
@@ -990,12 +1009,49 @@ int ut_config (oconfig_item_t *ci)
   th.hits = 0;
   th.hysteresis = 0;
   th.flags = UT_FLAG_INTERESTING; /* interesting by default */
-    
+
+    status = 0;
+
+    /**
+     * Required for UseRegex option
+     */
+    for (i = 0; i < ci->children_num; i++)
+    {
+        oconfig_item_t *option = ci->children + i;
+
+        if (strcasecmp ("UseRegex", option->key) == 0) {
+            if (option->values[0].type != OCONFIG_TYPE_BOOLEAN) {
+                WARNING ("Wrong option type for '%s', Boolean type expected", option->key);
+                status = -1;
+            }
+            else {
+                if (option->values[0].value.boolean) {
+                    compare = (void *) re_compare;
+                }
+            }
+
+            break;
+        }
+
+    }
+
+  if (threshold_tree == NULL)
+  {
+    threshold_tree = c_avl_create ((void *) compare);
+    if (threshold_tree == NULL)
+    {
+      ERROR ("ut_config: c_avl_create failed.");
+      return (-1);
+    }
+  }
+
   for (i = 0; i < ci->children_num; i++)
   {
     oconfig_item_t *option = ci->children + i;
     status = 0;
 
+    if (strcasecmp ("UseRegex", option->key) == 0) 
+        continue;
     if (strcasecmp ("Type", option->key) == 0)
       status = ut_config_type (&th, option);
     else if (strcasecmp ("Plugin", option->key) == 0)

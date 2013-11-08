@@ -8,6 +8,7 @@ collectd-threshold - Documentation of collectd's I<Threshold plugin>
 
  LoadPlugin "threshold"
  <Plugin "threshold">
+   UseRegex false
    <Type "foo">
      WarningMin    0.00
      WarningMax 1000.00
@@ -102,6 +103,9 @@ they must be nested in the above order, i.e. C<Host> may contain either
 C<Plugin> and C<Type> blocks, C<Plugin> may only contain C<Type> blocks and
 C<Type> may not contain other blocks. If multiple blocks apply to the same
 value the most specific block is used.
+
+By default each C<Plugin>, C<Instance> or C<Type> string comparison is made with C<strcmp()>.
+If C<UseRegex> is set to C<True> (this is not the default behaviour), Posix regexp will be used.
 
 The other statements specify the threshold to configure. They B<must> be
 included in a C<Type> block. Currently the following statements are recognized:
