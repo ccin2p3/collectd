@@ -286,6 +286,7 @@ static int memory_read_internal (value_list_t *vl)
 	int numfields;
 
 	_Bool detailed_slab_info = 0;
+	_Bool detailed_mem_info = 0;
 
 	gauge_t mem_total = 0;
 	gauge_t mem_used = 0;
@@ -295,6 +296,7 @@ static int memory_read_internal (value_list_t *vl)
 	gauge_t mem_slab_total = 0;
 	gauge_t mem_slab_reclaimable = 0;
 	gauge_t mem_slab_unreclaimable = 0;
+	gauge_t mem_lock = 0;
 
 	if ((fh = fopen ("/proc/meminfo", "r")) == NULL)
 	{
@@ -326,6 +328,10 @@ static int memory_read_internal (value_list_t *vl)
 			val = &mem_slab_unreclaimable;
 			detailed_slab_info = 1;
 		}
+		else if (strncasecmp (buffer, "Mlocked:", 8) == 0) {
+			val = &mem_lock;
+			detailed_mem_info = 1;
+		}
 		else
 			continue;
 
@@ -343,10 +349,10 @@ static int memory_read_internal (value_list_t *vl)
 				sstrerror (errno, errbuf, sizeof (errbuf)));
 	}
 
-	if (mem_total < (mem_free + mem_buffered + mem_cached + mem_slab_total))
+	if (mem_total < (mem_free + mem_buffered + mem_cached + mem_slab_total + mem_lock))
 		return (-1);
 
-	mem_used = mem_total - (mem_free + mem_buffered + mem_cached + mem_slab_total);
+	mem_used = mem_total - (mem_free + mem_buffered + mem_cached + mem_slab_total + mem_lock);
 
 	/* SReclaimable and SUnreclaim were introduced in kernel 2.6.19
 	 * They sum up to the value of Slab, which is available on older & newer
@@ -365,6 +371,8 @@ static int memory_read_internal (value_list_t *vl)
 		               "cached",   mem_cached,
 		               "free",     mem_free,
 		               "slab",     mem_slab_total);
+	if (detailed_mem_info)
+		MEMORY_SUBMIT ("locked", mem_lock);
 /* #endif KERNEL_LINUX */
 
 #elif HAVE_LIBKSTAT
