@@ -2042,6 +2042,12 @@ write_riemann_la_CFLAGS = $(AM_CFLAGS) $(LIBRIEMANN_CLIENT_CFLAGS)
 write_riemann_la_LDFLAGS = $(PLUGIN_LDFLAGS) $(LIBRIEMANN_CLIENT_LIBS)
 endif
 
+if BUILD_PLUGIN_WRITE_SYSLOG
+pkglib_LTLIBRARIES += write_syslog.la
+write_syslog_la_SOURCES = src/write_syslog.c
+write_syslog_la_LDFLAGS = $(PLUGIN_LDFLAGS)
+endif
+
 if BUILD_PLUGIN_WRITE_SENSU
 pkglib_LTLIBRARIES += write_sensu.la
 write_sensu_la_SOURCES = src/write_sensu.c
