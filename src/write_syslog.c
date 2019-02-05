@@ -428,7 +428,7 @@ static int ws_send_message(const char *key, const char *value, cdtime_t time,
   int status;
   size_t message_len;
   char message[1024];
-  char *buffer = "";
+  char buffer[64] = "";
   const char *host_tags = cb->host_tags ? cb->host_tags : "";
   const char *host_tags_json_prefix = "";
   const char *metrics_prefix =
@@ -439,6 +439,7 @@ static int ws_send_message(const char *key, const char *value, cdtime_t time,
   if (value[0] == 'n')
     return 0;
 
+  rfc3339_local(buffer, sizeof(buffer), time);
   if (strcasecmp("JSON", msg_format) == 0) {
     if (cb->host_tags) {
       host_tags_json_prefix = ",";
@@ -447,16 +448,15 @@ static int ws_send_message(const char *key, const char *value, cdtime_t time,
         /* The metric key-values are are part of the syslog msg, in json
            format */
         message, sizeof(message),
-        "<166>%s collectd {\"time\":%.0f, \"%s\":{ \"%s\":{ \"%s\":%s }, "
+        "<166>%s %s collectd {\"time\":%.0f, \"%s\":{ \"%s\":{ \"%s\":%s }, "
         "\"plugin\":\"%s\", \"plugin_instance\":\"%s\", "
         "\"type_instance\":\"%s\","
         " \"type\":\"%s\", \"interval\":%.0f }, \"hostname\":\"%s\" %s "
         "%s}\n",
-        host, CDTIME_T_TO_DOUBLE(time), metrics_prefix, plugin, key, value,
+        buffer, host, CDTIME_T_TO_DOUBLE(time), metrics_prefix, plugin, key, value,
         plugin, plugin_instance, type_instance, type,
         CDTIME_T_TO_DOUBLE(interval), host, host_tags_json_prefix, host_tags);
   } else {
-    rfc3339_local(buffer, sizeof(buffer), time);
     status = snprintf(
         /* The metric key-values are part of the syslog structrude data,
          * MessageFormat = "human" */
