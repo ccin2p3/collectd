@@ -52,6 +52,7 @@
 %define with_bind 0%{!?_without_bind:1}
 %define with_ceph 0%{!?_without_ceph:1}
 %define with_cgroups 0%{!?_without_cgroups:1}
+%define with_check_uptime 0%{!?_without_check_uptime:1}
 %define with_chrony 0%{!?_without_chrony:1}
 %define with_connectivity 0%{!?_without_connectivity:1}
 %define with_conntrack 0%{!?_without_conntrack:1}
@@ -75,6 +76,7 @@
 %define with_fhcount 0%{!?_without_fhcount:1}
 %define with_filecount 0%{!?_without_filecount:1}
 %define with_fscache 0%{!?_without_fscache:1}
+%define with_ganglia 0%{!?_without_ganglia:1}
 %define with_gmond 0%{!?_without_gmond:1}
 %define with_gps 0%{!?_without_gps:1}
 %define with_hddtemp 0%{!?_without_hddtemp:1}
@@ -262,6 +264,18 @@
 %define with_write_redis 0
 %define with_write_riemann 0
 %define with_xmms 0
+%endif
+
+# Plugins not buildable on RHEL 8
+%if 0%{?rhel} && 0%{?rhel} >= 8
+%define with_lvm 0
+%define with_smart 0
+%define with_ganglia 0
+%define with_gmond 0
+%define with_gps 0
+%define with_modbus 0
+%define with_ping 0
+%define with_mqtt 0
 %endif
 
 Summary:	Statistics collection and monitoring daemon
@@ -823,11 +837,22 @@ Monitors process starts/stops via netlink library.
 Summary:	Python plugin for collectd
 Group:		System Environment/Daemons
 Requires:	%{name}%{?_isa} = %{version}-%{release}
-	%if 0%{?rhel} && 0%{?rhel} < 6
-BuildRequires: python26-devel
-	%else
+%if 0%{?rhel}
+%if 0%{?rhel} == 8
+BuildRequires: python3-devel
+%endif
+%if 0%{?rhel} == 7
+BuildRequires: python2-devel
+%endif
+%if 0%{?rhel} == 6
+BuildRequires: python2-devel
+%endif
+%if 0%{?rhel} <= 5
 BuildRequires: python-devel
-	%endif
+%endif
+%else
+BuildRequires: python-devel
+%endif
 %description python
 The Python plugin embeds a Python interpreter into collectd and exposes the
 application programming interface (API) to Python-scripts.
@@ -1166,6 +1191,12 @@ Collectd utilities
 %define _with_cgroups --disable-cgroups
 %endif
 
+%if %{with_check_uptime}
+%define _with_check_uptime --enable-check_uptime
+%else
+%define _with_check_uptime --disable-check_uptime
+%endif
+
 %if %{with_chrony}
 %define _with_chrony --enable-chrony
 %else
@@ -1320,6 +1351,12 @@ Collectd utilities
 %define _with_fscache --enable-fscache
 %else
 %define _with_fscache --disable-fscache
+%endif
+
+%if %{with_ganglia}
+%define _with_ganglia --enable-ganglia
+%else
+%define _with_ganglia --disable-ganglia
 %endif
 
 %if %{with_gmond}
@@ -2045,6 +2082,7 @@ Collectd utilities
 	%{?_with_bind} \
 	%{?_with_ceph} \
 	%{?_with_cgroups} \
+	%{?_with_check_uptime} \
 	%{?_with_chrony} \
 	%{?_with_connectivity} \
 	%{?_with_conntrack} \
@@ -2329,6 +2367,9 @@ fi
 %endif
 %if %{with_cgroups}
 %{_libdir}/%{name}/cgroups.so
+%endif
+%if %{with_check_uptime}
+%{_libdir}/%{name}/check_uptime.so
 %endif
 %if %{with_conntrack}
 %{_libdir}/%{name}/conntrack.so
