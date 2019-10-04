@@ -279,6 +279,7 @@
 %define with_mqtt 0
 %define with_amqp1 0
 %define with_write_riemann 0
+%define with_dbi 0
 %endif
 
 Summary:	Statistics collection and monitoring daemon
