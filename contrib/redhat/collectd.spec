@@ -272,6 +272,8 @@
 %define with_gps 0
 %define with_redis 0
 %define with_write_redis 0
+%define with_email 0
+%define with_notify_email 0
 %endif
 
 Summary:	Statistics collection and monitoring daemon
