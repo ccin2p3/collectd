@@ -75,6 +75,7 @@
 %define with_fhcount 0%{!?_without_fhcount:1}
 %define with_filecount 0%{!?_without_filecount:1}
 %define with_fscache 0%{!?_without_fscache:1}
+%define with_ganglia 0%{!?_without_ganglia:1}
 %define with_gmond 0%{!?_without_gmond:1}
 %define with_gps 0%{!?_without_gps:1}
 %define with_hddtemp 0%{!?_without_hddtemp:1}
@@ -262,6 +263,12 @@
 %define with_write_redis 0
 %define with_write_riemann 0
 %define with_xmms 0
+%endif
+
+# Plugins not buildable on RHEL 8
+%if 0%{?rhel} && 0%{?rhel} > 7
+%define with_ganglia 0
+%define with_gmond 0
 %endif
 
 Summary:	Statistics collection and monitoring daemon
@@ -1320,6 +1327,12 @@ Collectd utilities
 %define _with_fscache --enable-fscache
 %else
 %define _with_fscache --disable-fscache
+%endif
+
+%if %{with_ganglia}
+%define _with_ganglia --enable-ganglia
+%else
+%define _with_ganglia --disable-ganglia
 %endif
 
 %if %{with_gmond}
