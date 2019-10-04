@@ -272,6 +272,7 @@
 %define with_gps 0
 %define with_modbus 0
 %define with_ping 0
+%define with_mqtt 0
 %endif
 
 Summary:	Statistics collection and monitoring daemon
