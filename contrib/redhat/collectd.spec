@@ -834,10 +834,14 @@ Monitors process starts/stops via netlink library.
 Summary:	Python plugin for collectd
 Group:		System Environment/Daemons
 Requires:	%{name}%{?_isa} = %{version}-%{release}
+	%if 0%{?rhel} && 0%{?rhel} > 7
+BuildRequires: python2-devel
+  %else
 	%if 0%{?rhel} && 0%{?rhel} < 6
 BuildRequires: python26-devel
 	%else
 BuildRequires: python-devel
+	%endif
 	%endif
 %description python
 The Python plugin embeds a Python interpreter into collectd and exposes the
