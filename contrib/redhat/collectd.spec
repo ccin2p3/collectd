@@ -281,6 +281,7 @@
 %define with_write_riemann 0
 %define with_dbi 0
 %define with_nut 0
+%define with_java 0
 %endif
 
 Summary:	Statistics collection and monitoring daemon
