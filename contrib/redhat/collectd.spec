@@ -52,6 +52,7 @@
 %define with_bind 0%{!?_without_bind:1}
 %define with_ceph 0%{!?_without_ceph:1}
 %define with_cgroups 0%{!?_without_cgroups:1}
+%define with_check_uptime 0%{!?_without_check_uptime:1}
 %define with_chrony 0%{!?_without_chrony:1}
 %define with_connectivity 0%{!?_without_connectivity:1}
 %define with_conntrack 0%{!?_without_conntrack:1}
@@ -1193,6 +1194,12 @@ Collectd utilities
 %define _with_cgroups --disable-cgroups
 %endif
 
+%if %{with_check_uptime}
+%define _with_check_uptime --enable-check_uptime
+%else
+%define _with_check_uptime --disable-check_uptime
+%endif
+
 %if %{with_chrony}
 %define _with_chrony --enable-chrony
 %else
@@ -2078,6 +2085,7 @@ Collectd utilities
 	%{?_with_bind} \
 	%{?_with_ceph} \
 	%{?_with_cgroups} \
+	%{?_with_uptime} \
 	%{?_with_chrony} \
 	%{?_with_connectivity} \
 	%{?_with_conntrack} \
@@ -2362,6 +2370,9 @@ fi
 %endif
 %if %{with_cgroups}
 %{_libdir}/%{name}/cgroups.so
+%endif
+%if %{with_check_uptime}
+%{_libdir}/%{name}/check_uptime.so
 %endif
 %if %{with_conntrack}
 %{_libdir}/%{name}/conntrack.so
