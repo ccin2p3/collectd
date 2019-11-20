@@ -270,7 +270,6 @@
 %if 0%{?rhel} && 0%{?rhel} > 7
 %define with_lvm 0
 %define with_smart 0
-%define with_connectivity 0
 %define with_ganglia 0
 %define with_gmond 0
 %define with_gps 0
