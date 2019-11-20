@@ -278,7 +278,6 @@
 %define with_ping 0
 %define with_mqtt 0
 %define with_nut 0
-%define with_java 0
 %endif
 
 Summary:	Statistics collection and monitoring daemon
