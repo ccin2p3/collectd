@@ -96,10 +96,8 @@ static int config_keys_num = STATIC_ARRAY_SIZE(config_keys);
 static int openvpn_strsplit(char *string, char **fields, size_t size) {
   size_t i = 0;
   char *ptr = string;
-  char *saveptr = NULL;
 
-  while ((fields[i] = strtok_r(ptr, ",\t", &saveptr)) != NULL) {
-    ptr = NULL;
+  while ((fields[i] = strsep(&ptr, ",\t")) != NULL) {
     i++;
 
     if (i >= size)
@@ -374,8 +372,8 @@ static int multi2_read(const char *name, FILE *fh) {
     /* Check if the data line fields count matches header line. */
     if (fields_num != columns) {
       ERROR("openvpn plugin: File format error in instance %s: Fields count "
-            "mismatch.",
-            name);
+            "mismatch: expected %i got %i",
+            name, columns, fields_num, columns);
       return -1;
     }
 
