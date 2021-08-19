@@ -50,6 +50,21 @@
 #define EXPORT
 #endif
 
+#define SSTRCAT(d, s)                                                          \
+  do {                                                                         \
+    size_t _l = strlen(d);                                                     \
+    strncpy((d) + _l, (s), sizeof(d) - _l);                                    \
+    (d)[sizeof(d) - 1] = '\0';                                                 \
+  } while (0)
+
+#define SSTRCATF(d, ...)                                                       \
+  do {                                                                         \
+    char _b[sizeof(d)];                                                        \
+    snprintf(_b, sizeof(_b), __VA_ARGS__);                                     \
+    _b[sizeof(_b) - 1] = '\0';                                                 \
+    SSTRCAT((d), _b);                                                          \
+  } while (0)
+
 #if HAVE_PTHREAD_NP_H
 #include <pthread_np.h> /* for pthread_set_name_np(3) */
 #endif
@@ -2112,12 +2127,30 @@ static int plugin_dispatch_values_internal(value_list_t *vl) {
     return -1;
   }
 
+#if COLLECT_DEBUG
+  char meta_string[255] = "";
+  if (vl->meta) {
+    char **toc;
+    int n = meta_data_toc(vl->meta, &toc);
+    for (int i=0; i<n; i++) {
+      char *key = toc[i];
+      char *value;
+      if (0 == meta_data_as_string(vl->meta, key, &value)) {
+        SSTRCATF(meta_string, "%s = %s; ", key, value);
+        free(value);
+      }
+      free(toc[i]);
+    }
+    free(toc);
+  }
   DEBUG("plugin_dispatch_values: time = %.3f; interval = %.3f; "
         "host = %s; "
         "plugin = %s; plugin_instance = %s; "
-        "type = %s; type_instance = %s;",
+        "type = %s; type_instance = %s; "
+        "%s",
         CDTIME_T_TO_DOUBLE(vl->time), CDTIME_T_TO_DOUBLE(vl->interval),
-        vl->host, vl->plugin, vl->plugin_instance, vl->type, vl->type_instance);
+        vl->host, vl->plugin, vl->plugin_instance, vl->type, vl->type_instance, meta_string);
+#endif
 
 #if COLLECT_DEBUG
   assert(0 == strcmp(ds->type, vl->type));
